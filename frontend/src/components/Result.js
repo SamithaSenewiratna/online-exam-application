@@ -47,7 +47,7 @@ export default function Result() {
             boxShadow: 10,
             borderRadius: 4,
             width: "100%",
-            bgcolor: "rgba(255, 255, 255, 0.9)", // semi-transparent for background visibility
+            bgcolor: "rgba(255, 255, 255, 0.9)", 
             textAlign: "center",
             p: 3,
           }}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Card,
@@ -15,30 +15,34 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-const sampleQuestions = [
-  {
-    question: "What is the capital of France?",
-    options: ["Paris", "Rome", "Berlin", "Madrid"],
-    correct: "Paris",
-  },
-  {
-    question: "Which planet is known as the Red Planet?",
-    options: ["Earth", "Mars", "Jupiter", "Venus"],
-    correct: "Mars",
-  },
-  {
-    question: "What is the largest ocean on Earth?",
-    options: ["Atlantic", "Indian", "Pacific", "Arctic"],
-    correct: "Pacific",
-  },
-];
-
 export default function Quiz() {
+  const [sampleQuestions, setSampleQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [score, setScore] = useState(0);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/questions");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setSampleQuestions(data);
+      } catch (err) {
+        console.error("Failed to fetch questions:", err);
+        setError("Failed to load questions. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const currentQuestion = sampleQuestions[currentIndex];
 
@@ -64,14 +68,54 @@ export default function Quiz() {
       }
     });
     setScore(calculatedScore);
-    // Navigate to result page, pass score & total as state
-    navigate("/result", { state: { score: calculatedScore, total: sampleQuestions.length } });
+    navigate("/result", {
+      state: { score: calculatedScore, total: sampleQuestions.length },
+    });
   };
 
-  const progress = ((currentIndex + 1) / sampleQuestions.length) * 100;
+  const progress = sampleQuestions.length
+    ? ((currentIndex + 1) / sampleQuestions.length) * 100
+    : 0;
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, textAlign: "center" }}>
+        <Typography variant="h6">Loading questions...</Typography>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="error">
+          {error}
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (!sampleQuestions.length) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, textAlign: "center" }}>
+        <Typography variant="h6">No questions available.</Typography>
+      </Container>
+    );
+  }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, display: "flex", justifyContent: "center",backgroundImage: 'url("https://img.freepik.com/free-vector/question-marks-background_78370-2896.jpg?t=st=1746382743~exp=1746386343~hmac=d60634c25043f5f925b6ee3182b43d39c95d5bab5f5a2216ecc4f14eb4c344c4&w=1380")', alignItems: "center", minHeight: "90vh" }}>
+    <Container
+      maxWidth="md"
+      sx={{
+        mt: 4,
+        display: "flex",
+        justifyContent: "center",
+        backgroundImage:
+          'url("https://img.freepik.com/free-vector/question-marks-background_78370-2896.jpg")',
+        alignItems: "center",
+        minHeight: "90vh",
+      }}
+    >
       <Card sx={{ boxShadow: 10, borderRadius: 3, width: "100%", p: 2 }}>
         <CardContent>
           <Typography variant="h5" gutterBottom sx={{ color: "#3f51b5" }}>
